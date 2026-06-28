@@ -49,28 +49,30 @@ class _MainLayoutState extends State<MainLayout> {
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 8.0,
+        child: SafeArea(
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildNavItem(Icons.explore, 'Explore', 0),
-                _buildNavItem(
-                  Icons.account_balance_wallet_outlined,
-                  'Budget',
-                  1,
-                ),
-                _buildNavItem(Icons.card_travel, 'Trips', 2),
-                _buildNavItem(Icons.person_outline, 'Profile', 3),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildNavItem(Icons.explore, 'Explore', 0),
+                  _buildNavItem(
+                    Icons.account_balance_wallet_outlined,
+                    'Budget',
+                    1,
+                  ),
+                  _buildNavItem(Icons.card_travel, 'Trips', 2),
+                  _buildNavItem(Icons.person_outline, 'Profile', 3),
+                ],
+              ),
             ),
           ),
         ),
