@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:libra_go/services/supabase_service.dart';
 
@@ -25,6 +27,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   bool _isFetchingRates = false;
   double _convertedIdr = 0.0;
   
+  File? _receiptFile;
+  String? _existingReceiptUrl;
+  
   final List<String> _currencies = ['IDR', 'USD', 'SGD', 'JPY', 'EUR', 'MYR', 'AUD'];
 
   final Map<String, Map<String, dynamic>> _categories = {
@@ -43,6 +48,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       _nameController.text = exp['name'] ?? '';
       _selectedCategory = exp['category'] ?? 'culinary';
       _selectedCurrency = exp['currency'] ?? 'IDR';
+      _existingReceiptUrl = exp['receipt_url'];
       if (exp['date'] != null) {
         final parsedDate = DateTime.parse(exp['date']);
         _selectedDate = parsedDate;
@@ -122,6 +128,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         _selectedTime.minute,
       );
 
+      String? finalReceiptUrl = _existingReceiptUrl;
+      if (_receiptFile != null) {
+        finalReceiptUrl = await _supabase.uploadReceipt(_receiptFile!);
+      }
+
       final expenseData = {
         'name': name,
         'amount': _selectedCurrency == 'IDR' ? amount.toInt() : _convertedIdr.toInt(),
@@ -130,6 +141,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         'exchange_rate': _selectedCurrency == 'IDR' ? 1.0 : _exchangeRates[_selectedCurrency],
         'category': _selectedCategory,
         'date': dateTime.toIso8601String(),
+        'receipt_url': finalReceiptUrl,
       };
 
       if (widget.expense != null) {
@@ -208,6 +220,25 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       initialTime: _selectedTime,
     );
     if (picked != null) setState(() => _selectedTime = picked);
+  }
+
+  Future<void> _pickReceiptImage() async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _receiptFile = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      _showSnackBar('Gagal memilih gambar: $e');
+    }
   }
 
   @override
@@ -475,27 +506,41 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.black12, style: BorderStyle.solid),
-                    ),
-                    child: Column(
-                      children: const [
-                        Icon(Icons.camera_alt_outlined, color: Colors.black26, size: 24),
-                        SizedBox(height: 8),
-                        Text(
-                          'Unggah Foto Struk',
-                          style: TextStyle(
-                            color: Color(0xFF596273),
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                  GestureDetector(
+                    onTap: _pickReceiptImage,
+                    child: Container(
+                      width: double.infinity,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.black12, style: BorderStyle.solid),
+                      ),
+                      child: _receiptFile != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(24),
+                              child: Image.file(_receiptFile!, fit: BoxFit.cover),
+                            )
+                          : (_existingReceiptUrl != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(24),
+                                  child: Image.network(_existingReceiptUrl!, fit: BoxFit.cover),
+                                )
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(Icons.camera_alt_outlined, color: Colors.black26, size: 24),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Unggah Foto Struk',
+                                      style: TextStyle(
+                                        color: Color(0xFF596273),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                )),
                     ),
                   ),
                   

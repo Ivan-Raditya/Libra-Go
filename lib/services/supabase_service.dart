@@ -81,20 +81,31 @@ class SupabaseService {
     }
   }
 
+  // Upload Trip Image
   Future<String?> uploadTripImage(File imageFile) async {
-    final userId = currentUser?.id;
-    if (userId == null) return null;
-
-    final fileExtension = imageFile.path.split('.').last.toLowerCase();
-    final fileName = 'trip-${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
-    final filePath = '$userId/$fileName';
-
     try {
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+      final filePath = '${currentUser!.id}/$fileName';
+      
       await client.storage.from('trips').upload(filePath, imageFile);
-      final publicUrl = client.storage.from('trips').getPublicUrl(filePath);
-      return publicUrl;
+      return client.storage.from('trips').getPublicUrl(filePath);
     } catch (e) {
-      rethrow;
+      print('Error uploading trip image: $e');
+      return null;
+    }
+  }
+
+  // Upload Receipt Image
+  Future<String?> uploadReceipt(File imageFile) async {
+    try {
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+      final filePath = '${currentUser!.id}/$fileName';
+      
+      await client.storage.from('receipts').upload(filePath, imageFile);
+      return client.storage.from('receipts').getPublicUrl(filePath);
+    } catch (e) {
+      print('Error uploading receipt image: $e');
+      return null;
     }
   }
 
