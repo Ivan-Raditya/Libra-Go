@@ -3,8 +3,9 @@ import 'package:libra_go/services/supabase_service.dart';
 
 class AddItineraryScreen extends StatefulWidget {
   final String tripId;
+  final Map<String, dynamic>? existingItinerary;
 
-  const AddItineraryScreen({super.key, required this.tripId});
+  const AddItineraryScreen({super.key, required this.tripId, this.existingItinerary});
 
   @override
   State<AddItineraryScreen> createState() => _AddItineraryScreenState();
@@ -18,6 +19,21 @@ class _AddItineraryScreenState extends State<AddItineraryScreen> {
   final _locationController = TextEditingController();
   DateTime? _selectedDate;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.existingItinerary != null) {
+      final item = widget.existingItinerary!;
+      _dayController.text = item['day_number']?.toString() ?? '';
+      _titleController.text = item['title'] ?? '';
+      _descriptionController.text = item['description'] ?? '';
+      _locationController.text = item['location'] ?? '';
+      if (item['date'] != null) {
+        _selectedDate = DateTime.tryParse(item['date']);
+      }
+    }
+  }
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -53,15 +69,19 @@ class _AddItineraryScreenState extends State<AddItineraryScreen> {
         'trip_id': widget.tripId,
         'day_number': dayNumber,
         'title': title,
-        if (description.isNotEmpty) 'description': description,
-        if (location.isNotEmpty) 'location': location,
-        if (_selectedDate != null) 'date': _selectedDate!.toIso8601String().split('T')[0],
+        'description': description.isNotEmpty ? description : null,
+        'location': location.isNotEmpty ? location : null,
+        'date': _selectedDate != null ? _selectedDate!.toIso8601String().split('T')[0] : null,
       };
 
-      await _supabase.addItinerary(data);
+      if (widget.existingItinerary != null) {
+        await _supabase.updateItinerary(widget.existingItinerary!['id'].toString(), data);
+      } else {
+        await _supabase.addItinerary(data);
+      }
 
       if (mounted) {
-        _showSnackBar('Jadwal berhasil ditambahkan!');
+        _showSnackBar(widget.existingItinerary != null ? 'Jadwal berhasil diperbarui!' : 'Jadwal berhasil ditambahkan!');
         Future.delayed(const Duration(seconds: 1), () {
           if (mounted) Navigator.pop(context, true);
         });
@@ -94,9 +114,9 @@ class _AddItineraryScreenState extends State<AddItineraryScreen> {
           icon: const Icon(Icons.arrow_back, color: Color(0xFF0D1B2A)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Tambah Jadwal Harian',
-          style: TextStyle(color: Color(0xFF0D1B2A), fontWeight: FontWeight.bold, fontSize: 16),
+        title: Text(
+          widget.existingItinerary != null ? 'Edit Jadwal Harian' : 'Tambah Jadwal Harian',
+          style: const TextStyle(color: Color(0xFF0D1B2A), fontWeight: FontWeight.bold, fontSize: 16),
         ),
       ),
       body: SingleChildScrollView(

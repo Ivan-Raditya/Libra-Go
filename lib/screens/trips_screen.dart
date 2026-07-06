@@ -68,16 +68,7 @@ class _TripsScreenState extends State<TripsScreen> {
             fontSize: 16,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Color(0xFF0D1B2A)),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_none, color: Color(0xFF0D1B2A)),
-            onPressed: () {},
-          ),
-        ],
+        // actions: removed dummy icons
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

@@ -43,6 +43,10 @@ class SupabaseService {
     await client.auth.resetPasswordForEmail(email);
   }
 
+  Future<void> updatePassword(String newPassword) async {
+    await client.auth.updateUser(UserAttributes(password: newPassword));
+  }
+
   // ==================== PROFILES ====================
 
   Future<Map<String, dynamic>?> getProfile() async {
@@ -260,6 +264,12 @@ class SupabaseService {
     if (userId == null) return;
     data['user_id'] = userId;
     await client.from('itineraries').insert(data);
+  }
+
+  Future<void> updateItinerary(String id, Map<String, dynamic> data) async {
+    final userId = currentUser?.id;
+    if (userId == null) return;
+    await client.from('itineraries').update(data).eq('id', id).eq('user_id', userId);
   }
 
   Future<void> deleteItinerary(String id) async {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:libra_go/screens/personal_info_screen.dart';
-import 'package:libra_go/screens/payment_method_screen.dart';
 import 'package:libra_go/screens/help_screen.dart';
 import 'package:libra_go/screens/security_screen.dart';
+import 'package:libra_go/screens/all_trips_screen.dart';
 import 'package:libra_go/services/supabase_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -111,7 +111,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: Color(0xFF0D1B2A)),
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Pengaturan sedang dalam pengembangan')),
+              );
+            },
           ),
         ],
       ),
@@ -220,10 +224,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _loadProfile();
                           }
                         }),
-                        _buildMenuItem(Icons.credit_card_outlined, 'Metode Pembayaran', onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const PaymentMethodScreen()));
+                        _buildMenuItem(Icons.receipt_long_outlined, 'Riwayat Anggaran', onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const AllTripsScreen()));
                         }),
-                        _buildMenuItem(Icons.receipt_long_outlined, 'Riwayat Anggaran'),
                         _buildMenuItem(Icons.security_outlined, 'Keamanan', onTap: () {
                           Navigator.push(context, MaterialPageRoute(builder: (context) => const SecurityScreen()));
                         }),

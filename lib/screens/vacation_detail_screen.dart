@@ -325,11 +325,7 @@ class _VacationDetailScreenState extends State<VacationDetailScreen> with Single
         final item = _itineraries[index];
         final dateStr = item['date'] != null ? '${DateTime.parse(item['date']).day}/${DateTime.parse(item['date']).month}' : '';
         return _buildTimelineItem(
-          day: 'HARI ${item['day_number']}',
-          date: dateStr,
-          title: item['title'] ?? '',
-          description: item['description'] ?? '',
-          locationBox: item['location'],
+          item: item,
           isLast: index == _itineraries.length - 1,
         );
       },
@@ -401,7 +397,13 @@ class _VacationDetailScreenState extends State<VacationDetailScreen> with Single
     );
   }
 
-  Widget _buildTimelineItem({required String day, required String date, required String title, required String description, String? locationBox, required bool isLast}) {
+  Widget _buildTimelineItem({required Map<String, dynamic> item, required bool isLast}) {
+    final day = 'HARI ${item['day_number']}';
+    final dateStr = item['date'] != null ? '${DateTime.parse(item['date']).day}/${DateTime.parse(item['date']).month}' : '';
+    final title = item['title'] ?? '';
+    final description = item['description'] ?? '';
+    final locationBox = item['location'];
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,12 +421,58 @@ class _VacationDetailScreenState extends State<VacationDetailScreen> with Single
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('$day • $date', style: const TextStyle(color: Color(0xFF1E8F82), fontSize: 12, fontWeight: FontWeight.bold)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('$day • $dateStr', style: const TextStyle(color: Color(0xFF1E8F82), fontSize: 12, fontWeight: FontWeight.bold)),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_horiz, color: Color(0xFF596273), size: 20),
+                        onSelected: (value) async {
+                          if (value == 'edit') {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => AddItineraryScreen(tripId: widget.trip!['id'].toString(), existingItinerary: item)),
+                            );
+                            if (result == true) _loadItineraries();
+                          } else if (value == 'delete') {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Hapus Jadwal'),
+                                content: const Text('Yakin ingin menghapus jadwal ini?'),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+                                  TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Hapus', style: TextStyle(color: Colors.red))),
+                                ],
+                              ),
+                            );
+                            if (confirm == true) {
+                              try {
+                                await _supabase.deleteItinerary(item['id'].toString());
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Jadwal dihapus')));
+                                  _loadItineraries();
+                                }
+                              } catch (e) {
+                                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal menghapus: $e')));
+                              }
+                            }
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(value: 'edit', child: Text('Edit Jadwal')),
+                          const PopupMenuItem(value: 'delete', child: Text('Hapus Jadwal', style: TextStyle(color: Colors.red))),
+                        ],
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 4),
                   Text(title, style: const TextStyle(color: Color(0xFF0D1B2A), fontSize: 14, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  Text(description, style: const TextStyle(color: Color(0xFF596273), fontSize: 13, height: 1.4)),
-                  if (locationBox != null) ...[
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(description, style: const TextStyle(color: Color(0xFF596273), fontSize: 13, height: 1.4)),
+                  ],
+                  if (locationBox != null && locationBox.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -433,7 +481,7 @@ class _VacationDetailScreenState extends State<VacationDetailScreen> with Single
                         children: [
                           const Icon(Icons.location_on_outlined, color: Color(0xFF1E8F82), size: 16),
                           const SizedBox(width: 8),
-                          Text(locationBox, style: const TextStyle(color: Color(0xFF0D1B2A), fontSize: 12, fontWeight: FontWeight.bold)),
+                          Expanded(child: Text(locationBox, style: const TextStyle(color: Color(0xFF0D1B2A), fontSize: 12, fontWeight: FontWeight.bold))),
                         ],
                       ),
                     ),

@@ -79,11 +79,6 @@ class HelpScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   _buildFaqItem(
-                    'Bagaimana cara menghubungkan E-Wallet?',
-                    'Buka menu Profil > Metode Pembayaran, lalu pilih Tambah Metode Baru dan pilih E-Wallet. Masukkan detail akun Anda.',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildFaqItem(
                     'Apakah data saya aman?',
                     'Ya, data Anda disimpan dengan enkripsi end-to-end menggunakan teknologi dari Supabase.',
                   ),
